@@ -32,7 +32,7 @@ from config import (
     STATIONS,
 )
 from ingestion.laqn_collector import collect_station
-from ingestion.weather_collector import fetch_weather_year
+from ingestion.weather_collector import fetch_weather_year, fetch_weather_recent
 from database.db_connector import get_connection, init_db
 
 
@@ -74,8 +74,15 @@ def backfill_weather():
     end_year = int(BACKFILL_END[:4])
 
     total = 0
+    current_year = int(BACKFILL_END[:4])
+
     for year in range(start_year, end_year + 1):
-        rows = fetch_weather_year(year)
+        # Archive API for past years, forecast API for current year
+        if year < current_year:
+            rows = fetch_weather_year(year)
+        else:
+            rows = fetch_weather_recent(f"{year}-01-01", BACKFILL_END)
+
         inserted = 0
         for row in rows:
             if row["timestamp"] in existing:
@@ -105,10 +112,10 @@ def backfill_weather():
 
 def prepare_clean_data():
     """
-    Clean ALL data (2019-2026) using the exact same pipeline as Notebook 01:
+    Clean ALL data (2019-2026) using the same pipeline as Notebook 01:
     1. Filter MY1 station
     2. Force numeric types
-    3. Keep no2, o3, so2
+    3. Keep no2 only (ARIMA is univariate; O3/SO2 unused and heavily missing)
     4. Complete hourly reindex
     5. Forward fill ≤3 hours
     6. Drop remaining NaN
@@ -131,9 +138,9 @@ def prepare_clean_data():
         if col in pollution.columns:
             pollution[col] = pd.to_numeric(pollution[col], errors="coerce")
 
-    # Keep only no2, o3, so2
-    pollutants = ["no2", "o3", "so2"]
-    my1 = pollution[pollutants].copy().sort_index()
+    # Keep only no2 — ARIMA only forecasts NO2
+    # O3 has 20-100% missing in 2024-2026, dropna() would kill 8000+ valid NO2 hours
+    my1 = pollution[["no2"]].copy().sort_index()
 
     # Complete hourly index (same as Notebook 01)
     full_idx = pd.date_range(my1.index.min(), my1.index.max(), freq="h")
@@ -291,12 +298,13 @@ def analyse_drift(results):
     print(f"  {'Quarter':<12} {'RMSE':<10} {'MAE':<10} {'Days':<8} {'Status'}")
     print(f"  {'-'*50}")
     for idx, row in quarterly.iterrows():
-        status = "⚠ DRIFT" if row["rmse"] > original_rmse * 1.5 else "OK"
+        status = "⚠ DRIFT" if row["rmse"] > 13.31 else "OK"
         print(f"  {str(idx):<12} {row['rmse']:<10.2f} {row['mae']:<10.2f} {int(row['count']):<8} {status}")
 
-    # Drift decision: >30% worse = drift
-    drift_threshold = 1.3
-    is_drifted = rmse > original_rmse * drift_threshold
+    # Drift decision: 95% bootstrap CI upper bound from drift_analysis.ipynb
+    # 10,000 resamples of original test errors → CI = [9.79, 13.31]
+    ci_upper = 13.31
+    is_drifted = rmse > ci_upper
 
     print(f"\n  {'='*50}")
     if is_drifted:

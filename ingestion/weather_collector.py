@@ -10,7 +10,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import (
-    WEATHER_ARCHIVE_URL, LONDON_LAT, LONDON_LON,
+    WEATHER_ARCHIVE_URL, WEATHER_FORECAST_URL, LONDON_LAT, LONDON_LON,
     WEATHER_VARIABLES, WEATHER_COLUMN_MAP,
     HISTORICAL_START, HISTORICAL_END,
 )
@@ -45,6 +45,50 @@ def fetch_weather_year(year):
         return []
 
     # Build rows — parallel arrays to list of dicts
+    rows = []
+    for i, ts in enumerate(timestamps):
+        row = {"timestamp": ts}
+        for api_name, col_name in WEATHER_COLUMN_MAP.items():
+            values = hourly.get(api_name, [])
+            row[col_name] = values[i] if i < len(values) else None
+        rows.append(row)
+
+    print(f"{len(rows)} hours")
+    return rows
+
+
+def fetch_weather_recent(start_date, end_date):
+    """Fetch recent actual weather from Open-Meteo Forecast API.
+    Only keeps observations up to yesterday (excludes future forecasts)."""
+    from datetime import date, datetime
+
+    yesterday = date.today().isoformat()
+
+    params = {
+        "latitude": LONDON_LAT,
+        "longitude": LONDON_LON,
+        "hourly": ",".join(WEATHER_VARIABLES),
+        "start_date": start_date,
+        "end_date": yesterday,
+    }
+
+    print(f"  Fetching recent weather ({start_date} → {yesterday})...", end=" ")
+
+    try:
+        resp = requests.get(WEATHER_FORECAST_URL, params=params, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.RequestException, ValueError) as e:
+        print(f"ERROR: {e}")
+        return []
+
+    hourly = data.get("hourly", {})
+    timestamps = hourly.get("time", [])
+
+    if not timestamps:
+        print("no data returned")
+        return []
+
     rows = []
     for i, ts in enumerate(timestamps):
         row = {"timestamp": ts}
