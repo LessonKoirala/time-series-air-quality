@@ -57,6 +57,10 @@ WEATHER_COLUMN_MAP = {
 HISTORICAL_START = "2019-01-01"
 HISTORICAL_END = "2023-12-31"
 
+# Backfill range (2024 → today)
+BACKFILL_START = "2024-01-01"
+BACKFILL_END = "2026-04-03"
+
 # Chunk size for LAQN requests (days)
 LAQN_CHUNK_DAYS = 7
 

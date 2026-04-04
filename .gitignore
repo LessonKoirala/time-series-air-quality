@@ -5,3 +5,4 @@ __pycache__/
 *.db-wal
 .ipynb_checkpoints/
 models/saved/
+monitoring/logs/
