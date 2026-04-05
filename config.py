@@ -1,5 +1,5 @@
 """
-Configuration — API URLs, station codes, date ranges, DB path.
+Configuration: API URLs, station codes, date ranges and DB path.
 """
 import os
 

@@ -1,5 +1,5 @@
 """
-Database connector — creates SQLite DB, runs schema, provides connection helper.
+Database connector: creates SQLite DB, runs schema and provides connection helper.
 """
 import sqlite3
 import os

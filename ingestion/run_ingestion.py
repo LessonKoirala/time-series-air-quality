@@ -1,5 +1,5 @@
 """
-Run full historical data ingestion — pollution + weather.
+Run full historical data ingestion: pollution and weather.
 Usage: python ingestion/run_ingestion.py
 """
 import time
