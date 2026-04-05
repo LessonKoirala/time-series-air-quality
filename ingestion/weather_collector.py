@@ -59,20 +59,20 @@ def fetch_weather_year(year):
 
 def fetch_weather_recent(start_date, end_date):
     """Fetch recent actual weather from Open-Meteo Forecast API.
-    Only keeps observations up to yesterday (excludes future forecasts)."""
-    from datetime import date, datetime
+    Only keeps observations up to today."""
+    from datetime import date
 
-    yesterday = date.today().isoformat()
+    today = date.today().isoformat()
 
     params = {
         "latitude": LONDON_LAT,
         "longitude": LONDON_LON,
         "hourly": ",".join(WEATHER_VARIABLES),
         "start_date": start_date,
-        "end_date": yesterday,
+        "end_date": today,
     }
 
-    print(f"  Fetching recent weather ({start_date} → {yesterday})...", end=" ")
+    print(f"  Fetching recent weather ({start_date} → {today})...", end=" ")
 
     try:
         resp = requests.get(WEATHER_FORECAST_URL, params=params, timeout=60)

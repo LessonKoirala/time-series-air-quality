@@ -99,7 +99,7 @@ Focused on **MY1 (Marylebone Road)**, one of London's busiest roadside monitors.
 |-------|-----------|-------------------|-------|
 | **ARIMA(1,1,2)** | 3 | **11.61** | Best point forecast, selected for production |
 | SARIMA(1,1,2)(1,1,2,7) | 7 | 11.97 | Lower AIC but worse forecast |
-| VAR(12) | 432 | 31.14 | Multivariate, 63% worse than ARIMA |
+| VAR(12) | 432 | 31.14 | Multivariate, ARIMA achieves 63% lower error |
 | GARCH(1,1) | 3 | n/a | Models volatility, not mean. Dynamic CI |
 
 ## Unseen Data Validation (2024 to 2026)
@@ -113,11 +113,11 @@ The ARIMA model was evaluated on **778 days** it was never trained on:
 
 ## Key Findings
 
-- NO2 at Marylebone Road dropped **52% since 2019** (62.8 to 30.6 ug/m3), a statistically significant decline (p < 10^-146)
+- NO2 at Marylebone Road dropped **51% since 2019** (62.8 to 30.6 ug/m3), a statistically significant decline (p < 10^-146)
 - 2024-2026 pollution levels **match the first COVID lockdown** without any restrictions in place
 - Weekdays average **8.5 ug/m3 higher** than weekends (p < 0.000001), confirming traffic as the primary driver
 - NO2 is **93% self-driven** (FEVD). Weather explains only 7% of forecast variance
-- Rain does **not** reduce NO2. Wind helps by ~6.5 ug/m3 on average
+- Rain does **not** reduce NO2. Wind helps by ~6.6 ug/m3 on average
 - The model **misses 73% of UK limit exceedance days** (sensitivity 27%). Not suitable for health warning systems without threshold adjustment
 - February is the worst month (51 ug/m3 mean, 72% exceedance)
 - Sensor outages beyond 3 days do not worsen predictions further. ARIMA converges to the mean within 3 steps

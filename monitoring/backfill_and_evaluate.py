@@ -1,13 +1,11 @@
 """
 Backfill & Drift Evaluation Pipeline
 
-1. Collect 2024-01-01 → 2026-04-03 from APIs into SQLite
-2. Clean new data (same pipeline as Notebook 01)
-3. Load saved ARIMA model (arima_best_fit.pkl)
-4. Rolling predict 2024-2026, one day at a time
-   → Save actual vs predicted to CSV
-5. Analyse the CSV → RMSE, quarterly breakdown, drift decision
-6. If drift → retrain on 2019-2026 → save new model
+1. Collect 2024-2026 from APIs into SQLite
+2. Clean new data (NO2 only, same pipeline as Notebook 01)
+3. Rolling predict on unseen data, save actual vs predicted to CSV
+4. Analyse drift: RMSE, quarterly breakdown, CI threshold check
+5. If drift detected, retrain on 2019-2026 and save new model
 
 Usage: python monitoring/backfill_and_evaluate.py
 """
@@ -200,7 +198,8 @@ def rolling_predict(train_data, unseen_data):
     # Load saved model to confirm the order
     model_path = os.path.join(SAVED_DIR, "arima_best_fit.pkl")
     if os.path.exists(model_path):
-        saved_model = pickle.load(open(model_path, "rb"))
+        with open(model_path, "rb") as f:
+            saved_model = pickle.load(f)
         order = saved_model.model.order
         print(f"  Loaded saved ARIMA model: order={order}")
     else:
@@ -272,7 +271,7 @@ def analyse_drift(results):
     # Overall metrics on unseen data
     rmse = np.sqrt(mean_squared_error(results["actual"], results["predicted"]))
     mae = mean_absolute_error(results["actual"], results["predicted"])
-    mape = mae / results["actual"].mean() * 100
+    mape = (np.abs(results["error"]) / results["actual"]).mean() * 100
 
     # Original metrics from Notebook 02 (2023 test set)
     original_rmse = 11.61
@@ -402,7 +401,8 @@ def retrain_model(train_data, unseen_data):
         shutil.copy(new_model_path, old_model_path)
         print(f"  Old model backed up to {old_model_path}")
 
-    pickle.dump(final_fit, open(new_model_path, "wb"))
+    with open(new_model_path, "wb") as f:
+        pickle.dump(final_fit, f)
     print(f"  ✓ New model saved to {new_model_path}")
     print(f"  AIC: {final_fit.aic:.1f}")
 
