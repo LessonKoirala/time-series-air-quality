@@ -98,7 +98,7 @@ Focused on **MY1 (Marylebone Road)**, one of London's busiest roadside monitors.
 | Model | Parameters | Walk-Forward RMSE | Notes |
 |-------|-----------|-------------------|-------|
 | **ARIMA(1,1,2)** | 3 | **11.61** | Best point forecast, selected for production |
-| SARIMA(1,1,2)(1,1,2,7) | 9 | 11.97 | Lower AIC but worse forecast |
+| SARIMA(1,1,2)(1,1,2,7) | 7 | 11.97 | Lower AIC but worse forecast |
 | VAR(12) | 432 | 31.14 | Multivariate, 63% worse than ARIMA |
 | GARCH(1,1) | 3 | n/a | Models volatility, not mean. Dynamic CI |
 
